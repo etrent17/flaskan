@@ -1,0 +1,552 @@
+<!-- login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard - Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96">
+        <h1 class="text-2xl font-bold mb-6 text-center">Analytics Dashboard</h1>
+        
+        {% if error %}
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+            <span class="block sm:inline">{{ error }}</span>
+        </div>
+        {% endif %}
+        
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
+                    Username
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                       id="username" name="username" type="text" placeholder="Username" required>
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
+                    Password
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 mb-3 leading-tight focus:outline-none focus:shadow-outline" 
+                       id="password" name="password" type="password" placeholder="Password" required>
+            </div>
+            <div class="flex items-center justify-center">
+                <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full" 
+                        type="submit">
+                    Sign In
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
+
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-gray-800">Analytics Dashboard</h1>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <a href="{{ url_for('admin_panel') }}" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">Admin</a>
+                        <a href="{{ url_for('logout') }}" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">User Management</h2>
+                <button id="addUserBtn" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+                    Add User
+                </button>
+            </div>
+            <div class="bg-white rounded-lg shadow overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                ID
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Username
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Admin
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersList" class="bg-white divide-y divide-gray-200">
+                        <!-- Users will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center hidden">
+        <div class="bg-white p-8 rounded-lg shadow-lg w-96">
+            <h2 class="text-xl font-bold mb-4">Add New User</h2>
+            
+            <div id="addUserError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 hidden">
+                <span class="block sm:inline" id="addUserErrorText"></span>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="newUsername">
+                    Username
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                       id="newUsername" type="text" placeholder="Username">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2" for="newPassword">
+                    Password
+                </label>
+                <input class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" 
+                       id="newPassword" type="password" placeholder="Password">
+            </div>
+            <div class="mb-6">
+                <label class="flex items-center">
+                    <input type="checkbox" id="isAdmin" class="form-checkbox h-5 w-5 text-blue-600">
+                    <span class="ml-2 text-gray-700">Admin User</span>
+                </label>
+            </div>
+            <div class="flex items-center justify-between">
+                <button id="addUserSubmit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Create User
+                </button>
+                <button id="addUserCancel" class="bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load users
+        function loadUsers() {
+            fetch('/admin/users')
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('usersList');
+                    tableBody.innerHTML = '';
+                    
+                    data.users.forEach(user => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${user.id}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${user.username}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${user.is_admin ? 'Yes' : 'No'}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <button class="delete-user text-red-600 hover:text-red-900" data-id="${user.id}">
+                                    Delete
+                                </button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                    
+                    // Add event listeners to delete buttons
+                    document.querySelectorAll('.delete-user').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            if (confirm('Are you sure you want to delete this user?')) {
+                                deleteUser(btn.dataset.id);
+                            }
+                        });
+                    });
+                });
+        }
+        
+        // Delete user
+        function deleteUser(userId) {
+            fetch(`/admin/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    loadUsers();
+                } else {
+                    alert(data.error || 'Failed to delete user');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the user');
+            });
+        }
+        
+        // Modal controls
+        document.getElementById('addUserBtn').addEventListener('click', () => {
+            document.getElementById('addUserModal').classList.remove('hidden');
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('isAdmin').checked = false;
+            document.getElementById('addUserError').classList.add('hidden');
+        });
+        
+        document.getElementById('addUserCancel').addEventListener('click', () => {
+            document.getElementById('addUserModal').classList.add('hidden');
+        });
+        
+        document.getElementById('addUserSubmit').addEventListener('click', () => {
+            const username = document.getElementById('newUsername').value;
+            const password = document.getElementById('newPassword').value;
+            const isAdmin = document.getElementById('isAdmin').checked;
+            
+            if (!username || !password) {
+                document.getElementById('addUserErrorText').textContent = 'Username and password are required';
+                document.getElementById('addUserError').classList.remove('hidden');
+                return;
+            }
+            
+            fetch('/admin/users', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password,
+                    is_admin: isAdmin
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('addUserModal').classList.add('hidden');
+                    loadUsers();
+                } else {
+                    document.getElementById('addUserErrorText').textContent = data.error || 'Failed to create user';
+                    document.getElementById('addUserError').classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('addUserErrorText').textContent = 'An error occurred while creating the user';
+                document.getElementById('addUserError').classList.remove('hidden');
+            });
+        });
+        
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+        });
+    </script>
+</body>
+</html>8">
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800">Time Range</h2>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex space-x-2">
+                    <button class="time-range bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" data-days="7">
+                        Last 7 Days
+                    </button>
+                    <button class="time-range bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded" data-days="30">
+                        Last 30 Days
+                    </button>
+                    <button class="time-range bg-gray-300 hover:bg-gray-400 text-black font-bold py-2 px-4 rounded" data-days="90">
+                        Last 90 Days
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Page Views</h2>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <canvas id="pageViewsChart"></canvas>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Unique Visitors</h2>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <canvas id="visitorsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Popular Pages</h2>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Page URL
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Views
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="popularPages" class="bg-white divide-y divide-gray-200">
+                            <!-- Popular pages will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Top Events</h2>
+                </div>
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Event Type
+                                </th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Count
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="topEvents" class="bg-white divide-y divide-gray-200">
+                            <!-- Top events will be inserted here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Charts
+        const pageViewsChart = new Chart(
+            document.getElementById('pageViewsChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Page Views',
+                        data: [],
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            }
+        );
+
+        const visitorsChart = new Chart(
+            document.getElementById('visitorsChart'),
+            {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Unique Visitors',
+                        data: [],
+                        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                        borderColor: 'rgba(16, 185, 129, 1)',
+                        borderWidth: 2,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            }
+        );
+
+        // Load data function
+        function loadData(days = 7) {
+            // Update active button
+            document.querySelectorAll('.time-range').forEach(btn => {
+                if (parseInt(btn.dataset.days) === days) {
+                    btn.classList.remove('bg-gray-300', 'hover:bg-gray-400', 'text-black');
+                    btn.classList.add('bg-blue-500', 'hover:bg-blue-700', 'text-white');
+                } else {
+                    btn.classList.remove('bg-blue-500', 'hover:bg-blue-700', 'text-white');
+                    btn.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-black');
+                }
+            });
+
+            // Fetch page views
+            fetch(`/analytics/pageviews?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    pageViewsChart.data.labels = data.labels;
+                    pageViewsChart.data.datasets[0].data = data.data;
+                    pageViewsChart.update();
+                });
+
+            // Fetch visitors
+            fetch(`/analytics/visitors?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    visitorsChart.data.labels = data.labels;
+                    visitorsChart.data.datasets[0].data = data.data;
+                    visitorsChart.update();
+                });
+
+            // Fetch popular pages
+            fetch(`/analytics/popular-pages?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('popularPages');
+                    tableBody.innerHTML = '';
+                    
+                    if (data.pages.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td colspan="2" class="px-6 py-4 text-sm text-gray-500 text-center">
+                                No data available
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    } else {
+                        data.pages.forEach(page => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${page.url}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${page.views}
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    }
+                });
+
+            // Fetch events
+            fetch(`/analytics/events?days=${days}`)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.getElementById('topEvents');
+                    tableBody.innerHTML = '';
+                    
+                    if (data.events.length === 0) {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td colspan="2" class="px-6 py-4 text-sm text-gray-500 text-center">
+                                No data available
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    } else {
+                        data.events.forEach(event => {
+                            const row = document.createElement('tr');
+                            row.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${event.type}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    ${event.count}
+                                </td>
+                            `;
+                            tableBody.appendChild(row);
+                        });
+                    }
+                });
+        }
+
+        // Add event listeners to time range buttons
+        document.querySelectorAll('.time-range').forEach(btn => {
+            btn.addEventListener('click', () => {
+                loadData(parseInt(btn.dataset.days));
+            });
+        });
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadData(7);
+        });
+    </script>
+</body>
+</html>
+
+<!-- admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Analytics Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <h1 class="text-xl font-bold text-gray-800">Admin Panel</h1>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="ml-4 flex items-center md:ml-6">
+                        <a href="{{ url_for('dashboard') }}" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>
+                        <a href="{{ url_for('logout') }}" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                            Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-
