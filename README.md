@@ -161,5 +161,3 @@ services:
       - SECRET_KEY=your_secure_key_here
 ```
 ```
-
-Let me know if you want this split into multiple `.md` files or if you need badges or formatting tweaks.
